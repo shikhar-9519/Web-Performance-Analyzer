@@ -12,6 +12,7 @@ import {
   TableHead,
   TableRow,
   Typography,
+  TableSortLabel,
 } from "@mui/material";
 import { Plus, X } from "lucide-react";
 import { fetchCruxData, transformCruxData } from "../services/cruxApi";
@@ -21,6 +22,8 @@ const MultipleURLView = () => {
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [sortColumn, setSortColumn] = useState(null);
+  const [sortDirection, setSortDirection] = useState(null);
 
   const handleUrlChange = (index, value) => {
     const newUrls = [...urls];
@@ -56,7 +59,6 @@ const MultipleURLView = () => {
       summary.avgInp += parseFloat(item.inp) || 0;
     });
 
-    // Calculate averages
     Object.keys(summary).forEach((key) => {
       summary[key] = (summary[key] / data.length).toFixed(2);
     });
@@ -80,9 +82,9 @@ const MultipleURLView = () => {
         }
       }
       const promises = validUrls.map((url) => fetchCruxData(url));
-      const responses = await Promise.all(promises);
-
-      const transformedData = responses.map((response) =>
+      const responses = await Promise.allSettled(promises);
+      const fulfilledResponses = responses.filter(response => response.status === "fulfilled");
+      const transformedData = fulfilledResponses.map((response) =>
         transformCruxData(response)
       );
       setResults(transformedData);
@@ -92,6 +94,20 @@ const MultipleURLView = () => {
       setLoading(false);
     }
   };
+
+  const handleSort = (column) => {
+    const isAsc = sortColumn === column && sortDirection === 'asc';
+    setSortColumn(column);
+    setSortDirection(isAsc ? 'desc' : 'asc');
+  };
+
+  const sortedResults = sortColumn
+    ? [...results].sort((a, b) => {
+        const valA = a[sortColumn];
+        const valB = b[sortColumn];
+        return (valA < valB ? -1 : 1) * (sortDirection === 'asc' ? 1 : -1);
+      })
+    : results;
 
   const summary = calculateSummary(results);
 
@@ -136,11 +152,10 @@ const MultipleURLView = () => {
           onClick={handleSearch}
           disabled={loading || urls.every((url) => !url.trim())}
         >
-          {loading ? "Analyzing..." : "Search"}
+          {loading ? "Analyzing..." : "Analyze"}
         </Button>
       </Box>
 
-      {/* Results Table */}
       {results?.length ? (
         <TableContainer>
           <Typography variant="h6" gutterBottom>
@@ -149,16 +164,64 @@ const MultipleURLView = () => {
           <Table>
             <TableHead>
               <TableRow>
-                <TableCell>URL</TableCell>
-                <TableCell>CLS</TableCell>
-                <TableCell>FCP (ms)</TableCell>
-                <TableCell>LCP (ms)</TableCell>
-                <TableCell>TTFB (ms)</TableCell>
-                <TableCell>INP (ms)</TableCell>
+                <TableCell>
+                  <TableSortLabel
+                    active={sortColumn === 'url'}
+                    direction={sortColumn === 'url' ? sortDirection : 'asc'}
+                    onClick={() => handleSort('url')}
+                  >
+                    URL
+                  </TableSortLabel>
+                </TableCell>
+                <TableCell>
+                  <TableSortLabel
+                    active={sortColumn === 'cls'}
+                    direction={sortColumn === 'cls' ? sortDirection : 'asc'}
+                    onClick={() => handleSort('cls')}
+                  >
+                    CLS
+                  </TableSortLabel>
+                </TableCell>
+                <TableCell>
+                  <TableSortLabel
+                    active={sortColumn === 'fcp'}
+                    direction={sortColumn === 'fcp' ? sortDirection : 'asc'}
+                    onClick={() => handleSort('fcp')}
+                  >
+                    FCP (ms)
+                  </TableSortLabel>
+                </TableCell>
+                <TableCell>
+                  <TableSortLabel
+                    active={sortColumn === 'lcp'}
+                    direction={sortColumn === 'lcp' ? sortDirection : 'asc'}
+                    onClick={() => handleSort('lcp')}
+                  >
+                    LCP (ms)
+                  </TableSortLabel>
+                </TableCell>
+                <TableCell>
+                  <TableSortLabel
+                    active={sortColumn === 'ttfb'}
+                    direction={sortColumn === 'ttfb' ? sortDirection : 'asc'}
+                    onClick={() => handleSort('ttfb')}
+                  >
+                    TTFB (ms)
+                  </TableSortLabel>
+                </TableCell>
+                <TableCell>
+                  <TableSortLabel
+                    active={sortColumn === 'inp'}
+                    direction={sortColumn === 'inp' ? sortDirection : 'asc'}
+                    onClick={() => handleSort('inp')}
+                  >
+                    INP (ms)
+                  </TableSortLabel>
+                </TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
-              {results.map((result, index) => (
+              {sortedResults.map((result, index) => (
                 <TableRow key={index}>
                   <TableCell>{result.url}</TableCell>
                   <TableCell>{result.cls}</TableCell>

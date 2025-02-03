@@ -31,12 +31,11 @@ export const fetchCruxData = async (url) => {
   }
 };
 
-// Transform raw CrUX data into a more usable format
 export const transformCruxData = (data) => {
-  const metrics = data.record.metrics;
+  const metrics = data.value.record.metrics;
   
   return {
-    url: data.record.key.origin,
+    url: data.value.record.key.origin,
     cls: metrics.cumulative_layout_shift?.percentiles?.p75 || 'N/A',
     fcp: metrics.first_contentful_paint?.percentiles?.p75 || 'N/A',
     lcp: metrics.largest_contentful_paint?.percentiles?.p75 || 'N/A',

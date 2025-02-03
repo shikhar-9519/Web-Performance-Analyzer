@@ -9,6 +9,7 @@ import {
 } from "@mui/material";
 import { fetchCruxData } from "../services/cruxApi";
 import WebVitalCard from "./WebVitalCard";
+import { toast } from "react-toastify";
 
 const SingleURLView = () => {
   const [url, setUrl] = useState("");
@@ -28,6 +29,8 @@ const handleSearch = async () => {
         const response = await fetchCruxData(url);
         setData(response);
     } catch (error) {
+        setData(null);
+        toast.error('Failed to fetch CrUX data');
         console.error(error);
     }
     setLoading(false);
@@ -54,14 +57,12 @@ const handleSearch = async () => {
 
       {loading ? <CircularProgress /> : data && (
         <Grid container spacing={3}>
-          {/* Core Web Vitals Summary */}
           <Grid item xs={12}>
             <Typography variant="h6" gutterBottom>
               Core Web Vitals
             </Typography>
           </Grid>
 
-          {/* LCP Card with Histogram */}
           <Grid item xs={12} md={6}>
             <WebVitalCard
               title="Largest Contentful Paint (LCP)"
@@ -70,7 +71,6 @@ const handleSearch = async () => {
             />
           </Grid>
 
-          {/* CLS Card with Histogram */}
           <Grid item xs={12} md={6}>
             <WebVitalCard
               title="Cumulative Layout Shift (CLS)"
@@ -79,7 +79,6 @@ const handleSearch = async () => {
             />
           </Grid>
 
-          {/* Additional metrics cards */}
           <Grid item xs={12} md={4}>
             <WebVitalCard
               title="First Contentful Paint (FCP)"
